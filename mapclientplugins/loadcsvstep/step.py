@@ -8,6 +8,7 @@ from PySide import QtGui
 
 from mapclient.mountpoints.workflowstep import WorkflowStepMountPoint
 from mapclientplugins.loadcsvstep.configuredialog import ConfigureDialog
+from mapclientplugins.loadcsvstep.utils.processCSV import ProcessCSV
 
 
 class LoadCSVStep(WorkflowStepMountPoint):
@@ -25,13 +26,13 @@ class LoadCSVStep(WorkflowStepMountPoint):
         # Ports:
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#uses',
-                      'file_location'))
+                      'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#provides',
                       'data_frame'))
         # Port data:
-        self._portData0 = None # file_location
-        self._portData1 = None # data_frame
+        self._csvFile = None # file_location
+        self._dataFrame = None # data_frame
         # Config:
         self._config = {}
         self._config['identifier'] = ''
@@ -44,6 +45,13 @@ class LoadCSVStep(WorkflowStepMountPoint):
         may be connected up to a button in a widget for example.
         """
         # Put your execute step code here before calling the '_doneExecution' method.
+        self._dataFrame = {}
+
+        csvfile_object = ProcessCSV(self._csvFile, delim=',', header=0)
+        self._dataFrame['coordinate'] = csvfile_object.getCoordinates()
+        self._dataFrame['gene'] = csvfile_object.getGene()
+        self._dataFrame['id'] = csvfile_object.getID()
+
         self._doneExecution()
 
     def setPortData(self, index, dataIn):
@@ -55,7 +63,7 @@ class LoadCSVStep(WorkflowStepMountPoint):
         :param index: Index of the port to return.
         :param dataIn: The data to set for the port at the given index.
         """
-        self._portData0 = dataIn # file_location
+        self._csvFile = dataIn # file_location
 
     def getPortData(self, index):
         """
@@ -65,7 +73,7 @@ class LoadCSVStep(WorkflowStepMountPoint):
 
         :param index: Index of the port to return.
         """
-        return self._portData1 # data_frame
+        return self._dataFrame # data_frame
 
     def configure(self):
         """
